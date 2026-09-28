@@ -1,0 +1,29 @@
+{
+  "name": "morse-tape-rescue",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "极地救援站：受潮无线电纸带的摩尔斯电文复原",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "smoke:core": "tsx scripts/smoke-core.ts",
+    "verify": "sh scripts/verify.sh"
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.3",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@vitejs/plugin-react": "^4.3.4",
+    "tsx": "^4.19.2",
+    "typescript": "~5.6.3",
+    "vite": "^5.4.11",
+    "vitest": "^2.1.8"
+  }
+}

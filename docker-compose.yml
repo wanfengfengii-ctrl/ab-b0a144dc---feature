@@ -1,0 +1,29 @@
+name: morse-tape-rescue
+
+services:
+  # 静态站点：通过 WEB_PORT 暴露，HTTP 健康检查确认可用
+  web:
+    build:
+      context: .
+      target: web
+    ports:
+      - "${WEB_PORT:-8080}:80"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      start_period: 5s
+
+  # 一次性验证服务：单元测试 + 生产构建 + 健康端点与复原核心样例冒烟，
+  # 结论体现在退出码中（0=通过，非 0=失败）。
+  verify:
+    build:
+      context: .
+      target: verify
+    depends_on:
+      web:
+        condition: service_healthy
+    environment:
+      HEALTH_URL: http://web/health
+    restart: "no"
