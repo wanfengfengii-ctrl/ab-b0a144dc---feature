@@ -3,7 +3,13 @@
  * 任一断言失败即以非零退出码结束。
  */
 import { solve } from '../src/core/solve';
-import { SAMPLE_BROKEN, SAMPLE_CLEAN, SAMPLE_NOISY } from '../src/core/samples';
+import {
+  SAMPLE_BROKEN,
+  SAMPLE_CLEAN,
+  SAMPLE_NOISY,
+  SAMPLE_READBACK,
+  SAMPLE_READBACK_FAIL,
+} from '../src/core/samples';
 
 let failures = 0;
 
@@ -55,6 +61,45 @@ console.log('样例 3：无解 SOSO 纸带（不得输出貌似完整的电文�
       out.reasons.some((r) => r.includes('SOSO') || r.includes('「O」')),
       `reasons=${JSON.stringify(out.reasons)}`,
     );
+  }
+}
+
+console.log('样例 4：回读一致性 SOS×2 纸带（两遍完全相同，词间停顿分隔）');
+{
+  const out = solve(SAMPLE_READBACK.input);
+  check('判定回读成功', out.kind === 'readback-solved', `kind=${out.kind}`);
+  if (out.kind === 'readback-solved') {
+    check('两遍电文均为 SOS', out.text === 'SOS', `text=${out.text}`);
+    check('共同单位时长为 2、零偏差',
+      out.unit === 2 && out.totalDeviation === 0 && out.maxDeviation === 0,
+      `unit=${out.unit} total=${out.totalDeviation} max=${out.maxDeviation}`);
+    check('分界为正中词间停顿',
+      out.dividerRunIndex === 17 && out.divider.type === 'word',
+      `dividerRunIndex=${out.dividerRunIndex}`);
+    const sameLen =
+      out.first.interpretations.length === 17 && out.second.interpretations.length === 17;
+    const samePattern = out.first.interpretations.every(
+      (it, j) => it.type === out.second.interpretations[j].type,
+    );
+    check('两遍游程等长且逐段同构', sameLen && samePattern,
+      `first=${out.first.interpretations.length} second=${out.second.interpretations.length} same=${samePattern}`);
+    const sum =
+      [...out.first.interpretations, ...out.second.interpretations].reduce(
+        (s, it) => s + it.deviation, 0,
+      ) + out.divider.deviation;
+    check('共同偏差为两半与分界之和', sum === out.totalDeviation,
+      `sum=${sum} total=${out.totalDeviation}`);
+  }
+}
+
+console.log('样例 5：回读失配 SO×2 纸带（不显示任一单边貌似成功的电文）');
+{
+  const out = solve(SAMPLE_READBACK_FAIL.input);
+  check('判定回读失配', out.kind === 'readback-no-match', `kind=${out.kind}`);
+  if (out.kind === 'readback-no-match') {
+    check('指出最早不能配对的位置', out.failRunIndex === 10 && out.failStage === 'pair',
+      `failRunIndex=${out.failRunIndex} stage=${out.failStage}`);
+    check('结果不含任何单边电文', !('words' in out) && !('text' in out), 'no words/text fields');
   }
 }
 

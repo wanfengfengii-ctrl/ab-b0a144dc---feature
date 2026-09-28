@@ -85,4 +85,67 @@ export const SAMPLE_BROKEN: SampleDef = {
   },
 };
 
-export const SAMPLES: SampleDef[] = [SAMPLE_CLEAN, SAMPLE_NOISY, SAMPLE_BROKEN];
+/**
+ * 回读一致性样例：同一段 SOS 电文被连续发送两遍，中间以词间停顿（14 = 7×2）分隔。
+ * 游程总数 35 = 4×8+3，正中第 18 段为分界词停顿；单位时长 2，零偏差。
+ */
+export const SAMPLE_READBACK: SampleDef = {
+  id: 'readback',
+  name: '回读样例 SOS×2',
+  description: '同一条 SOS 连发两遍、词间停顿分隔：启用回读一致性后两遍逐字相同，零偏差',
+  input: {
+    runs: runsFromDurations([
+      2, 2, 2, 2, 2, // S（第一遍）
+      6, // 字母间隔
+      6, 2, 6, 2, 6, // O
+      6, // 字母间隔
+      2, 2, 2, 2, 2, // S
+      14, // 分界词间停顿（7×2）
+      2, 2, 2, 2, 2, // S（第二遍）
+      6, // 字母间隔
+      6, 2, 6, 2, 6, // O
+      6, // 字母间隔
+      2, 2, 2, 2, 2, // S
+    ]),
+    unitMin: 1,
+    unitMax: 4,
+    alphabet: ['S', 'O'],
+    dictionary: ['SOS'],
+    readback: true,
+  },
+};
+
+/**
+ * 回读失败样例：两遍结构完全相同、正中确为词间停顿（23 = 4×5+3 段），
+ * 但每遍电文是「SO」——词典只有 SOS，两遍都停在不是完整单词的位置，
+ * 最早不能配对的字母在每遍末段（第 11 段）。
+ */
+export const SAMPLE_READBACK_FAIL: SampleDef = {
+  id: 'readback-fail',
+  name: '回读失配样例 SO×2',
+  description: '两遍虽逐段同构，但每遍只能拼成 SO（非词典单词）：无法形成相同回读，且不显示任一单边电文',
+  input: {
+    runs: runsFromDurations([
+      2, 2, 2, 2, 2, // S（第一遍）
+      6, // 字母间隔
+      6, 2, 6, 2, 6, // O（结尾不是词典完整单词）
+      14, // 分界词间停顿（7×2）
+      2, 2, 2, 2, 2, // S（第二遍，与第一遍逐段相同）
+      6, // 字母间隔
+      6, 2, 6, 2, 6, // O
+    ]),
+    unitMin: 1,
+    unitMax: 4,
+    alphabet: ['S', 'O'],
+    dictionary: ['SOS'],
+    readback: true,
+  },
+};
+
+export const SAMPLES: SampleDef[] = [
+  SAMPLE_CLEAN,
+  SAMPLE_NOISY,
+  SAMPLE_BROKEN,
+  SAMPLE_READBACK,
+  SAMPLE_READBACK_FAIL,
+];

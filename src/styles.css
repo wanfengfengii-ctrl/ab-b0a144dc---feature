@@ -143,6 +143,25 @@ body {
 .hint-inline { color: var(--muted); font-size: 0.78rem; }
 
 .actions { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 1rem; }
+.readback-toggle {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  padding: 0.55rem 0.7rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--panel-2);
+  cursor: pointer;
+}
+.readback-toggle:hover { border-color: var(--accent); }
+.readback-toggle input { margin-top: 0.2rem; }
+.readback-toggle span { display: flex; flex-direction: column; gap: 0.15rem; }
+.readback-toggle em {
+  font-style: normal;
+  color: var(--muted);
+  font-size: 0.76rem;
+}
 button {
   font: inherit;
   border-radius: 6px;
@@ -289,4 +308,64 @@ button.ghost { background: transparent; }
   border: 1px solid var(--word);
   border-radius: 4px;
   padding: 0 0.3rem;
+}
+
+/* ---------- 回读一致性结果 ---------- */
+.readback-card .message { margin-bottom: 0.5rem; }
+.readback-cols {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.8rem;
+  margin-top: 0.6rem;
+}
+.readback-col {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.5rem 0.6rem;
+  background: var(--panel-2);
+  min-width: 0;
+}
+.readback-col h4 {
+  margin: 0 0 0.4rem;
+  font-size: 0.85rem;
+  color: var(--accent);
+}
+.readback-col .strip { gap: 3px; }
+.readback-col .chip { min-width: 1.7rem; padding: 2px 3px; }
+.readback-col .strip-wrap { margin: 0 0 0.4rem; }
+.readback-col .message { gap: 0.35rem; margin-bottom: 0.4rem; }
+.readback-col .word-chip { font-size: 1.05rem; padding: 0.12rem 0.45rem; }
+.readback-morse { padding: 0.35rem 0.5rem; margin: 0 0 0.4rem; font-size: 0.8rem; }
+.readback-subtotal { margin: 0 0 0.4rem; }
+.run-table.compact { font-size: 0.8rem; }
+.run-table.compact th, .run-table.compact td { padding: 0.25rem 0.35rem; }
+.readback-divider-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-top: 0.7rem;
+  padding: 0.5rem 0.7rem;
+  border: 1px dashed var(--word);
+  border-radius: 8px;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.readback-divider-row strong { color: var(--word); }
+.divider-mark {
+  flex: 0 0 auto;
+  color: var(--word);
+  border: 1px solid var(--word);
+  border-radius: 6px;
+  padding: 0.15rem 0.5rem;
+  font-weight: 600;
+}
+.readback-full { margin-top: 0.7rem; }
+.readback-full summary {
+  cursor: pointer;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+.readback-full .strip-wrap { margin-top: 0.5rem; }
+@media (max-width: 720px) {
+  .readback-cols { grid-template-columns: 1fr; }
 }

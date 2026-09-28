@@ -36,6 +36,13 @@ export interface SolveInput {
   alphabet: string[];
   /** 词典（大写单词）。 */
   dictionary: string[];
+  /**
+   * 启用「回读一致性」：把整条纸带解释为以正中一个词间停顿分隔的
+   * 两遍完全相同电文。求解器在全序列共用一个整数单位与一套点划/停顿解释，
+   * 两侧的词、字母与摩尔斯码逐个相同；一致性仅为可行性约束，不参与决胜。
+   * 未启用（缺省 false）时一切按原规则进行。
+   */
+  readback?: boolean;
 }
 
 /** 复原成功。 */
@@ -59,6 +66,55 @@ export interface SolvedMessage {
   encoding: string;
 }
 
+/** 回读一致性成功：两遍电文逐词、逐字母、逐摩尔斯码完全相同。 */
+export interface ReadbackSolved {
+  kind: 'readback-solved';
+  /** 共同选定的整数单位时长（全序列唯一）。 */
+  unit: number;
+  /** 整条纸带的总绝对时长偏差（两遍游程 + 分界停顿之和）。 */
+  totalDeviation: number;
+  /** 整条纸带的单段最大偏差。 */
+  maxDeviation: number;
+  /** 分界词间停顿的游程下标（0 起始，必为正中的空白游程）。 */
+  dividerRunIndex: number;
+  /** 分界词间停顿的解释。 */
+  divider: RunInterpretation;
+  /** 单遍电文的单词序列（两遍相同）。 */
+  words: string[];
+  /** 单遍完整电文（两遍相同）。 */
+  text: string;
+  /** 单遍摩尔斯序列（两遍相同）。 */
+  morse: string;
+  /** 全序列按游程顺序的解释编码（前半 + 词停顿 2 + 后半）。 */
+  encoding: string;
+  /** 第一遍：游程下标区间 [0, dividerRunIndex) 的解释。 */
+  first: ReadbackHalf;
+  /** 第二遍：游程下标区间 (dividerRunIndex, N) 的解释。 */
+  second: ReadbackHalf;
+}
+
+/** 回读模式下的单遍电文：与对应游程区间等长、同序的解释。 */
+export interface ReadbackHalf {
+  interpretations: RunInterpretation[];
+  /** 该遍游程在整条纸带中的起始下标。 */
+  startIndex: number;
+}
+
+/**
+ * 回读一致性失败：无法把纸带解释成由一个词间停顿分隔的两遍相同电文。
+ * 定位到最早不能配对的位置——可以是某个空白游程（分界候选）或
+ * 某一对本该相同的字母/游程；绝不输出任一单边貌似成功的电文。
+ */
+export interface ReadbackNoMatch {
+  kind: 'readback-no-match';
+  /** 最早不能配对的位置：分界停顿候选游程下标，或第一遍中失配游程的下标。 */
+  failRunIndex: number;
+  /** 失配发生在分界停顿还是两遍之间的逐段配对。 */
+  failStage: 'divider' | 'pair';
+  /** 人类可读的原因列表。 */
+  reasons: string[];
+}
+
 /** 无解：给出最早无法落入任何有效词典前缀的游程及原因。 */
 export interface NoSolution {
   kind: 'no-solution';
@@ -74,4 +130,9 @@ export interface InvalidInput {
   errors: string[];
 }
 
-export type SolveOutcome = SolvedMessage | NoSolution | InvalidInput;
+export type SolveOutcome =
+  | SolvedMessage
+  | ReadbackSolved
+  | ReadbackNoMatch
+  | NoSolution
+  | InvalidInput;

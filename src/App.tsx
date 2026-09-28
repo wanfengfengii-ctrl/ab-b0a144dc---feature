@@ -12,6 +12,8 @@ interface Draft {
   unitMax: number;
   alphabetText: string;
   dictText: string;
+  /** 回读一致性：整条纸带须为以一个词间停顿分隔的两遍相同电文。 */
+  readback: boolean;
 }
 
 function parseAlphabet(text: string): string[] {
@@ -40,6 +42,7 @@ function loadSample(s: SampleDef): Draft {
     unitMax: s.input.unitMax,
     alphabetText: s.input.alphabet.join(''),
     dictText: s.input.dictionary.join(' '),
+    readback: s.input.readback ?? false,
   };
 }
 
@@ -50,6 +53,7 @@ function solveDraft(draft: Draft): SolveOutcome {
     unitMax: draft.unitMax,
     alphabet: parseAlphabet(draft.alphabetText),
     dictionary: parseDictionary(draft.dictText),
+    readback: draft.readback,
   });
 }
 
@@ -68,7 +72,10 @@ export default function App() {
   const stale = result.fingerprint !== fingerprint(draft);
 
   const failRunIndex =
-    !stale && result.outcome.kind === 'no-solution' ? result.outcome.failRunIndex : null;
+    !stale &&
+    (result.outcome.kind === 'no-solution' || result.outcome.kind === 'readback-no-match')
+      ? result.outcome.failRunIndex
+      : null;
 
   const ignored = useMemo(
     () => ignoredWords(parseAlphabet(draft.alphabetText), parseDictionary(draft.dictText)),
@@ -147,6 +154,18 @@ export default function App() {
               已忽略 {ignored.length} 个含字母表外字符的词条：{ignored.join('、')}
             </p>
           )}
+
+          <label className="readback-toggle" title="把整条纸带解释为以一个词间停顿分隔的两遍完全相同电文；全序列联合求解，不做事后筛选">
+            <input
+              type="checkbox"
+              checked={draft.readback}
+              onChange={(e) => patch({ readback: e.target.checked })}
+            />
+            <span>
+              回读一致性
+              <em>把整条纸带解释为以一个词间停顿分隔的两遍完全相同电文（联合求解，不做事后筛选）</em>
+            </span>
+          </label>
 
           <div className="actions">
             <button className="primary" onClick={doSolve}>

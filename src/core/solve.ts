@@ -1,4 +1,5 @@
 import { MORSE_CODE, MORSE_TO_CHAR } from './morse';
+import { solveReadback } from './readback';
 import type {
   InterpretationType,
   Run,
@@ -30,7 +31,7 @@ interface SignalOption {
   enc: string;
 }
 
-const SIGNAL_OPTIONS: SignalOption[] = [
+export const SIGNAL_OPTIONS: SignalOption[] = [
   { sym: '.', units: 1, type: 'dot', label: '点', enc: '0' },
   { sym: '-', units: 3, type: 'dash', label: '划', enc: '1' },
 ];
@@ -42,7 +43,7 @@ interface GapOption {
   enc: string;
 }
 
-const GAP_OPTIONS: GapOption[] = [
+export const GAP_OPTIONS: GapOption[] = [
   { units: 1, type: 'intra', label: '符内间隔', enc: '0' },
   { units: 3, type: 'letter', label: '字母间隔', enc: '1' },
   { units: 7, type: 'word', label: '词间隔', enc: '2' },
@@ -119,7 +120,7 @@ interface Trie {
   prefix: string[];
 }
 
-function buildTrie(words: string[]): Trie {
+export function buildTrie(words: string[]): Trie {
   const children: Array<Map<string, number>> = [new Map()];
   const terminal: boolean[] = [false];
   const prefix: string[] = [''];
@@ -188,7 +189,7 @@ function reachKey(s: ReachState): string {
  * 逐段处理游程，返回使可达状态集首次为空的游程下标及原因；
  * 若全程可达且结尾能落在词界上，返回 null。
  */
-function findEarliestFailure(
+export function findEarliestFailure(
   runs: Run[],
   trie: Trie,
   alphabetSet: ReadonlySet<string>,
@@ -406,6 +407,9 @@ function solveForUnit(
 export function solve(input: SolveInput): SolveOutcome {
   const errors = validateInput(input);
   if (errors.length > 0) return { kind: 'invalid', errors };
+
+  // 回读一致性：整条纸带必须解释为以一个词间停顿分隔的两遍相同电文。
+  if (input.readback) return solveReadback(input);
 
   const alphabetSet = new Set(input.alphabet);
   const words = usableWords(input.alphabet, input.dictionary);
