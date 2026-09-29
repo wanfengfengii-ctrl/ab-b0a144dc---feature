@@ -143,6 +143,19 @@ body {
 .hint-inline { color: var(--muted); font-size: 0.78rem; }
 
 .actions { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 1rem; }
+.toggle-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.55rem;
+  padding: 0.5rem 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--panel-2);
+  cursor: pointer;
+}
+.toggle-row input { margin-top: 0.2rem; }
+.toggle-row strong { color: var(--accent); font-weight: 600; }
+
 button {
   font: inherit;
   border-radius: 6px;
@@ -290,3 +303,69 @@ button.ghost { background: transparent; }
   border-radius: 4px;
   padding: 0 0.3rem;
 }
+
+/* ---------- 回读一致性：分栏结果 ---------- */
+.rb-intro { margin: -0.2rem 0 0.8rem; }
+.rb-columns {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  gap: 0.7rem;
+  align-items: start;
+  margin: 0.6rem 0 1rem;
+}
+@media (max-width: 1100px) {
+  .rb-columns { grid-template-columns: 1fr; }
+}
+.rb-half {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.6rem 0.7rem;
+  background: var(--panel-2);
+  min-width: 0;
+}
+.rb-half-title {
+  margin: 0 0 0.5rem;
+  font-size: 0.85rem;
+  color: var(--accent);
+}
+.rb-half .message { margin-bottom: 0.5rem; }
+.rb-half .word-chip { font-size: 1.15rem; }
+.rb-run-table { font-size: 0.78rem; }
+.rb-boundary-col { display: flex; align-items: stretch; }
+.rb-boundary {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  border: 1px dashed var(--word);
+  border-radius: 8px;
+  padding: 0.6rem 0.5rem;
+  color: var(--word);
+  background: rgba(185, 135, 224, 0.08);
+  min-width: 7.5rem;
+  text-align: center;
+}
+.rb-boundary-label {
+  font-size: 0.72rem;
+  border: 1px solid var(--word);
+  border-radius: 4px;
+  padding: 0 0.35rem;
+}
+.rb-boundary b { font-size: 0.95rem; }
+.rb-boundary i { font-style: normal; font-size: 0.72rem; color: var(--muted); }
+
+.rb-table-title { margin: 0.8rem 0 0.4rem; font-size: 0.85rem; color: var(--muted); }
+.rb-pair-table { font-size: 0.78rem; }
+.rb-pair-table th, .rb-pair-table td { padding: 0.25rem 0.35rem; }
+.rb-pair-sep {
+  background: rgba(79, 195, 247, 0.08);
+  text-align: center;
+  color: var(--muted);
+  border-left: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+}
+.rb-boundary-row td { background: rgba(185, 135, 224, 0.08); }
+.rb-boundary-cell { color: var(--muted); font-size: 0.78rem; }
+.rb-full-details { margin-top: 0.8rem; }
+.rb-full-details summary { cursor: pointer; color: var(--muted); font-size: 0.82rem; }

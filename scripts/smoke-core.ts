@@ -3,7 +3,7 @@
  * 任一断言失败即以非零退出码结束。
  */
 import { solve } from '../src/core/solve';
-import { SAMPLE_BROKEN, SAMPLE_CLEAN, SAMPLE_NOISY } from '../src/core/samples';
+import { SAMPLE_BROKEN, SAMPLE_CLEAN, SAMPLE_NOISY, SAMPLE_READBACK } from '../src/core/samples';
 
 let failures = 0;
 
@@ -56,6 +56,34 @@ console.log('样例 3：无解 SOSO 纸带（不得输出貌似完整的电文�
       `reasons=${JSON.stringify(out.reasons)}`,
     );
   }
+}
+
+console.log('样例 4：回读一致性 SOS×2 纸带（联合求解两遍相同电文）');
+{
+  const out = solve(SAMPLE_READBACK.input);
+  check('两遍均译出 SOS', out.kind === 'solved' && out.text === 'SOS',
+    out.kind === 'solved' ? `text=${out.text}` : `kind=${out.kind}`);
+  if (out.kind === 'solved' && out.readbackBoundary) {
+    check('单位时长为 2（两遍共用）', out.unit === 2, `unit=${out.unit}`);
+    check('总偏差为 13（两遍 12 ＋ 分界 1）', out.totalDeviation === 13,
+      `total=${out.totalDeviation}`);
+    check('分界落在正中央第 18 段', out.readbackBoundary.gapRunIndex === 17,
+      `boundary=${out.readbackBoundary.gapRunIndex + 1}`);
+    check('两遍游程数相等',
+      out.readbackBoundary.firstRunCount === 17 && out.readbackBoundary.secondRunCount === 17,
+      `${out.readbackBoundary.firstRunCount}/${out.readbackBoundary.secondRunCount}`);
+    check('摩尔斯序列正确', out.morse === '... --- ...', `morse=${out.morse}`);
+  } else if (out.kind === 'solved') {
+    failures++;
+    console.error('  [FAIL] 缺少 readbackBoundary 字段');
+  }
+}
+
+console.log('样例 5：未启用回读时该纸带按单遍规则译为 SOS SOS（行为保持原样）');
+{
+  const out = solve({ ...SAMPLE_READBACK.input, readback: false });
+  check('单遍结论为 SOS SOS', out.kind === 'solved' && out.text === 'SOS SOS',
+    out.kind === 'solved' ? `text=${out.text}` : `kind=${out.kind}`);
 }
 
 if (failures > 0) {

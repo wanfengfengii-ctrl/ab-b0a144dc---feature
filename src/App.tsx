@@ -12,6 +12,8 @@ interface Draft {
   unitMax: number;
   alphabetText: string;
   dictText: string;
+  /** 是否启用「回读一致性」：把纸带解释为一个词间停顿分隔的两遍相同电文。 */
+  readback: boolean;
 }
 
 function parseAlphabet(text: string): string[] {
@@ -40,6 +42,7 @@ function loadSample(s: SampleDef): Draft {
     unitMax: s.input.unitMax,
     alphabetText: s.input.alphabet.join(''),
     dictText: s.input.dictionary.join(' '),
+    readback: s.input.readback ?? false,
   };
 }
 
@@ -50,6 +53,7 @@ function solveDraft(draft: Draft): SolveOutcome {
     unitMax: draft.unitMax,
     alphabet: parseAlphabet(draft.alphabetText),
     dictionary: parseDictionary(draft.dictText),
+    readback: draft.readback,
   });
 }
 
@@ -67,8 +71,23 @@ export default function App() {
 
   const stale = result.fingerprint !== fingerprint(draft);
 
-  const failRunIndex =
-    !stale && result.outcome.kind === 'no-solution' ? result.outcome.failRunIndex : null;
+  // 编辑器 / 游程条高亮：无解时标最早失败游程；回读失配时标两侧不能配对的字母游程。
+  const failRunIndices: number[] = (() => {
+    if (stale) return [];
+    const o = result.outcome;
+    if (o.kind === 'no-solution') return [o.failRunIndex];
+    if (o.kind === 'readback-mismatch' && o.at === 'letter') {
+      const ix: number[] = [];
+      for (let i = o.letterRunStart ?? -1; i <= (o.letterRunEnd ?? -2); i++) ix.push(i);
+      for (let i = o.letterRunStart2 ?? -1; i <= (o.letterRunEnd2 ?? -2); i++) ix.push(i);
+      return ix;
+    }
+    if (o.kind === 'readback-mismatch' && o.at === 'boundary') {
+      const center = (result.runs.length - 1) / 2;
+      return Number.isInteger(center) ? [center] : [];
+    }
+    return [];
+  })();
 
   const ignored = useMemo(
     () => ignoredWords(parseAlphabet(draft.alphabetText), parseDictionary(draft.dictText)),
@@ -95,7 +114,7 @@ export default function App() {
           <h2>① 纸带游程（按出现顺序，明暗交替）</h2>
           <RunEditor
             runs={draft.runs}
-            failRunIndex={failRunIndex}
+            failRunIndices={stale ? [] : failRunIndices}
             onChange={(runs) => patch({ runs })}
           />
 
@@ -147,6 +166,23 @@ export default function App() {
               已忽略 {ignored.length} 个含字母表外字符的词条：{ignored.join('、')}
             </p>
           )}
+
+          <h2>⑤ 回读一致性</h2>
+          <label className="toggle-row">
+            <input
+              type="checkbox"
+              checked={draft.readback}
+              onChange={(e) => patch({ readback: e.target.checked })}
+            />
+            <span>
+              启用「回读一致性」：把整条纸带解释为<strong>以一个词间停顿分隔的两遍完全相同电文</strong>
+            </span>
+          </label>
+          <p className="hint">
+            启用后在全序列共同选择整数单位时长与点划、停顿解释，并联合确定分界词间停顿，
+            逐个比较两侧的词、字母与摩尔斯码；一致性仅作可行性约束，决胜口径不变。
+            无法形成相同回读时只报告最早不能配对的字母或分界，不展示任一单边电文。
+          </p>
 
           <div className="actions">
             <button className="primary" onClick={doSolve}>

@@ -2,8 +2,8 @@ import type { Run } from '../core/types';
 
 interface Props {
   runs: Run[];
-  /** 无解时最早失败的游程下标（0 起始），用于高亮；无则为 null。 */
-  failRunIndex: number | null;
+  /** 无解 / 失配时需要高亮的游程下标（0 起始，可多个）；无则为空数组。 */
+  failRunIndices: number[];
   onChange: (runs: Run[]) => void;
 }
 
@@ -11,7 +11,9 @@ interface Props {
  * 游程编辑器：纸带以信号开始、明暗交替、以信号结束。
  * 支持逐段修改时长、末尾追加/删除“空白+信号”一对游程。
  */
-export function RunEditor({ runs, failRunIndex, onChange }: Props) {
+export function RunEditor({ runs, failRunIndices, onChange }: Props) {
+  const failSet = new Set(failRunIndices);
+  const firstFail = failRunIndices.length > 0 ? failRunIndices[0] : null;
   const setDuration = (i: number, raw: string) => {
     const duration = Number(raw);
     onChange(runs.map((r, j) => (j === i ? { ...r, duration } : r)));
@@ -37,7 +39,7 @@ export function RunEditor({ runs, failRunIndex, onChange }: Props) {
             key={i}
             role="row"
             className={`run-row ${run.kind === 'signal' ? 'run-signal' : 'run-gap'}${
-              i === failRunIndex ? ' run-fail' : ''
+              failSet.has(i) ? ' run-fail' : ''
             }`}
           >
             <span className="run-index">{i + 1}</span>
@@ -63,8 +65,11 @@ export function RunEditor({ runs, failRunIndex, onChange }: Props) {
           － 删除末尾两段
         </button>
       </div>
-      {failRunIndex !== null && (
-        <p className="hint error">第 {failRunIndex + 1} 段是最早无法落入有效词典前缀的位置。</p>
+      {firstFail !== null && (
+        <p className="hint error">
+          第 {firstFail + 1} 段{failRunIndices.length > 1 ? '（及其配对侧对应字母游程）' : ''}
+          是最早不能配对 / 无法落入有效词典前缀的位置。
+        </p>
       )}
     </div>
   );

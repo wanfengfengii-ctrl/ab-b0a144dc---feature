@@ -1,6 +1,12 @@
 import { MORSE_CODE, MORSE_TO_CHAR } from './morse';
+import {
+  buildTrie,
+  GAP_OPTIONS,
+  SIGNAL_OPTIONS,
+  type Trie,
+} from './primitives';
+import { solveReadback } from './readback';
 import type {
-  InterpretationType,
   Run,
   RunInterpretation,
   SolveInput,
@@ -21,32 +27,6 @@ import type {
  * 无解时定位“最早无法落入任何有效词典前缀的游程”并给出原因，
  * 绝不输出貌似完整的电文。
  */
-
-interface SignalOption {
-  sym: '.' | '-';
-  units: number;
-  type: InterpretationType;
-  label: string;
-  enc: string;
-}
-
-const SIGNAL_OPTIONS: SignalOption[] = [
-  { sym: '.', units: 1, type: 'dot', label: '点', enc: '0' },
-  { sym: '-', units: 3, type: 'dash', label: '划', enc: '1' },
-];
-
-interface GapOption {
-  units: number;
-  type: InterpretationType;
-  label: string;
-  enc: string;
-}
-
-const GAP_OPTIONS: GapOption[] = [
-  { units: 1, type: 'intra', label: '符内间隔', enc: '0' },
-  { units: 3, type: 'letter', label: '字母间隔', enc: '1' },
-  { units: 7, type: 'word', label: '词间隔', enc: '2' },
-];
 
 /** 单位时长搜索跨度的安全上限，防止误输入导致长时间计算。 */
 const MAX_UNIT_SPAN = 5000;
@@ -110,35 +90,6 @@ export function validateInput(input: SolveInput): string[] {
   if (dictionary.length > MAX_WORDS) errors.push(`词典词条过多（> ${MAX_WORDS}）`);
 
   return errors;
-}
-
-/** 词典 trie：节点编号即前缀，便于在 DP 状态中引用。 */
-interface Trie {
-  children: Array<Map<string, number>>;
-  terminal: boolean[];
-  prefix: string[];
-}
-
-function buildTrie(words: string[]): Trie {
-  const children: Array<Map<string, number>> = [new Map()];
-  const terminal: boolean[] = [false];
-  const prefix: string[] = [''];
-  for (const word of words) {
-    let node = 0;
-    for (const ch of word) {
-      let next = children[node].get(ch);
-      if (next === undefined) {
-        next = children.length;
-        children.push(new Map());
-        terminal.push(false);
-        prefix.push(prefix[node] + ch);
-        children[node].set(ch, next);
-      }
-      node = next;
-    }
-    terminal[node] = true;
-  }
-  return { children, terminal, prefix };
 }
 
 /** 保留完全由受限字母表组成的非空单词，去重。 */
@@ -419,6 +370,10 @@ export function solve(input: SolveInput): SolveOutcome {
 
   const trie = buildTrie(words);
   const maxCodeLen = Math.max(...input.alphabet.map((c) => MORSE_CODE[c]?.length ?? 0));
+
+  if (input.readback) {
+    return solveReadback(input.runs, trie, alphabetSet, maxCodeLen, input.unitMin, input.unitMax);
+  }
 
   const failure = findEarliestFailure(input.runs, trie, alphabetSet, maxCodeLen);
   if (failure) return { kind: 'no-solution', ...failure };

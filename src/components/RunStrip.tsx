@@ -6,6 +6,8 @@ interface Props {
   interpretations?: RunInterpretation[] | null;
   /** 最早无法译码的游程下标（0 起始）；其后的游程不再可信，降灰显示。 */
   failRunIndex?: number | null;
+  /** 失配需高亮的游程下标集合（如回读两侧不能配对的字母游程），不做降灰。 */
+  failRunIndices?: number[] | null;
 }
 
 const GAP_SYMBOL: Record<string, string> = { intra: '₁', letter: '₃', word: '₇' };
@@ -13,14 +15,20 @@ const GAP_SYMBOL: Record<string, string> = { intra: '₁', letter: '₃', word: 
 /**
  * 纸带游程条：逐段展示解释结果、词界与未能译码的位置。
  */
-export function RunStrip({ runs, interpretations = null, failRunIndex = null }: Props) {
+export function RunStrip({
+  runs,
+  interpretations = null,
+  failRunIndex = null,
+  failRunIndices = null,
+}: Props) {
+  const failSet = new Set(failRunIndices ?? []);
   return (
     <div className="strip-wrap">
       <div className="strip" role="list" aria-label="游程解释条">
         {runs.map((run, i) => {
           const interp = interpretations?.[i] ?? null;
-          const failed = failRunIndex !== null && i === failRunIndex;
-          const dimmed = failRunIndex !== null && i > failRunIndex;
+          const failed = (failRunIndex !== null && i === failRunIndex) || failSet.has(i);
+          const dimmed = failRunIndex !== null && i > failRunIndex && failSet.size === 0;
           const cls = [
             'chip',
             failed

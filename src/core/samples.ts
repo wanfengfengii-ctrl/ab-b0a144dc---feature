@@ -85,4 +85,39 @@ export const SAMPLE_BROKEN: SampleDef = {
   },
 };
 
-export const SAMPLES: SampleDef[] = [SAMPLE_CLEAN, SAMPLE_NOISY, SAMPLE_BROKEN];
+/**
+ * 回读一致性样例：同一条受潮 SOS 电文被连续发送两遍，中间以词间停顿（13，
+ * 标称 14）分隔。启用「回读一致性」后在全序列共同选定单位时长 2、全部点划 /
+ * 停顿解释与居中分界，两遍均复原为 SOS；总偏差 13、单段最大偏差 1。
+ */
+export const SAMPLE_READBACK: SampleDef = {
+  id: 'readback',
+  name: '回读样例 SOS×2',
+  description: '受潮 SOS 被连续发送两遍并以词间停顿分隔：启用回读一致性后两遍均为 SOS，单位 2、总偏差 13',
+  input: {
+    runs: runsFromDurations([
+      ...[
+        3, 2, 2, 3, 2, // S（抖动）
+        7, // 字母间隔（抖动）
+        7, 2, 6, 3, 5, // O（抖动）
+        6, // 字母间隔
+        2, 2, 2, 2, 2, // S
+      ],
+      13, // 分界词间停顿（标称 14，抖动 1）
+      ...[
+        3, 2, 2, 3, 2,
+        7,
+        7, 2, 6, 3, 5,
+        6,
+        2, 2, 2, 2, 2,
+      ],
+    ]),
+    unitMin: 1,
+    unitMax: 4,
+    alphabet: ['S', 'O'],
+    dictionary: ['SOS'],
+    readback: true,
+  },
+};
+
+export const SAMPLES: SampleDef[] = [SAMPLE_CLEAN, SAMPLE_NOISY, SAMPLE_BROKEN, SAMPLE_READBACK];

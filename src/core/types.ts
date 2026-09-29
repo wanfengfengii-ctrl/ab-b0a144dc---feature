@@ -36,6 +36,20 @@ export interface SolveInput {
   alphabet: string[];
   /** 词典（大写单词）。 */
   dictionary: string[];
+  /**
+   * 是否启用「回读一致性」：把整条纸带解释为以一个词间停顿分隔的
+   * 两遍完全相同的电文。缺省视为 false（未启用时一切行为保持原样）。
+   */
+  readback?: boolean;
+}
+
+/** 回读分界词间停顿的位置信息。 */
+export interface ReadbackBoundary {
+  /** 分界词间停顿所在的游程下标（0 起始，必为空白游程）。 */
+  gapRunIndex: number;
+  /** 第一遍电文占用的游程下标区间 [0, gapRunIndex)；第二遍为 [gapRunIndex + 1, n)。 */
+  firstRunCount: number;
+  secondRunCount: number;
 }
 
 /** 复原成功。 */
@@ -57,6 +71,8 @@ export interface SolvedMessage {
   morse: string;
   /** 稳定选择用的游程顺序解释编码。 */
   encoding: string;
+  /** 回读一致性启用且成立时，两遍电文完全相同；此处分界信息用于分栏展示。 */
+  readbackBoundary?: ReadbackBoundary;
 }
 
 /** 无解：给出最早无法落入任何有效词典前缀的游程及原因。 */
@@ -68,10 +84,39 @@ export interface NoSolution {
   reasons: string[];
 }
 
+/**
+ * 回读不一致：启用「回读一致性」后，不存在任何分界词间停顿能让两遍电文
+ * 在词、字母、摩尔斯码各层完全相同。给出最早不能配对的位置，绝不展示
+ * 任一单边貌似成功的电文。
+ */
+export interface ReadbackMismatch {
+  kind: 'readback-mismatch';
+  /** 最早不能配对的位置；at 区分发生在字母配对还是分界选择阶段。 */
+  at: 'letter' | 'boundary';
+  /**
+   * at === 'letter'：第一遍中最早无法与第二遍配对的字母序号（0 起始，
+   * 按字母在整条电文中的顺序计）。
+   */
+  letterIndex?: number;
+  /** at === 'letter' 时，该字母所在游程下标区间，便于编辑器高亮（第一遍 / 第二遍）。 */
+  letterRunStart?: number;
+  letterRunEnd?: number;
+  letterRunStart2?: number;
+  letterRunEnd2?: number;
+  /** at === 'boundary'：参与尝试的候选分界词间停顿游程下标（升序）。 */
+  candidateGapRunIndices?: number[];
+  /** 人类可读的原因列表。 */
+  reasons: string[];
+}
+
 /** 输入不合法。 */
 export interface InvalidInput {
   kind: 'invalid';
   errors: string[];
 }
 
-export type SolveOutcome = SolvedMessage | NoSolution | InvalidInput;
+export type SolveOutcome =
+  | SolvedMessage
+  | NoSolution
+  | ReadbackMismatch
+  | InvalidInput;
